@@ -1,11 +1,15 @@
 package com.example.lab1
 
 import android.content.Intent
+import android.os.Build
 import android.os.Bundle
 import android.util.Log
 import android.widget.Button
-import androidx.appcompat.app.AppCompatActivity
 import androidx.activity.enableEdgeToEdge
+import androidx.annotation.RequiresApi
+import androidx.appcompat.app.AppCompatActivity
+import androidx.lifecycle.DefaultLifecycleObserver
+import androidx.lifecycle.LifecycleOwner
 
 abstract class BaseActivity : AppCompatActivity()  {
     val tag = "MY_APP"
@@ -14,49 +18,57 @@ abstract class BaseActivity : AppCompatActivity()  {
     protected abstract val buttonId: Int
     protected abstract val nextActivityClass: Class<*>
 
+    @RequiresApi(Build.VERSION_CODES.Q)
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        logLifecycle("created");
         enableEdgeToEdge()
+        lifecycle.addObserver(LifecycleLogger())
+
         setContentView(layoutId)
         initButton()
     }
 
-    private fun logLifecycle(status: String) {
-        Log.d(tag, "${this.componentName.shortClassName} $status")
-    }
 
     private fun initButton() {
         val btnNext: Button = this.findViewById(buttonId);
         btnNext.setOnClickListener {
-            logLifecycle("go to ${nextActivityClass.simpleName}")
+            Log.d(tag, "go to ${nextActivityClass.simpleName}")
             val intent = Intent(this, nextActivityClass)
             startActivity(intent)
         }
     }
 
-    override fun onStart() {
-        super.onStart()
-        logLifecycle("started")
+    private fun getActivityName(): String {
+        return this::class.java.simpleName
     }
 
-    override fun onResume() {
-        super.onResume()
-        logLifecycle("resumed")
-    }
+    inner class LifecycleLogger : DefaultLifecycleObserver {
+        override fun onCreate(owner: LifecycleOwner) {
+            log("CREATED")
+        }
 
-    override fun onPause() {
-        super.onPause()
-        logLifecycle("paused")
-    }
+        override fun onStart(owner: LifecycleOwner) {
+            log("STARTED")
+        }
 
-    override fun onStop() {
-        super.onStop()
-        logLifecycle("stopped")
-    }
+        override fun onPause(owner: LifecycleOwner) {
+            log("PAUSED")
+        }
 
-    override fun onDestroy() {
-        super.onDestroy()
-        logLifecycle("destroyed")
+        override fun onResume(owner: LifecycleOwner) {
+            log("RESUMED")
+        }
+
+        override fun onDestroy(owner: LifecycleOwner) {
+            log("DESTROYED")
+        }
+
+        override fun onStop(owner: LifecycleOwner) {
+            log("STOPPED")
+        }
+
+        private fun log(state: String) {
+            Log.d(tag, "${getActivityName()} - $state")
+        }
     }
 }

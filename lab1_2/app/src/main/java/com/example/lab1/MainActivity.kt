@@ -1,10 +1,14 @@
 package com.example.lab1
 
+import android.app.Activity
+import android.app.Application
+import android.os.Build
 import android.os.Bundle
 import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.annotation.RequiresApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
@@ -19,6 +23,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.DefaultLifecycleObserver
+import androidx.lifecycle.LifecycleOwner
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
@@ -28,41 +34,49 @@ import com.example.lab1.ui.theme.BackgroundC
 import com.example.lab1.ui.theme.ButtonColor
 
 class MainActivity : ComponentActivity() {
+    val tag = "MY_APP"
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
+        lifecycle.addObserver(LifecycleLogger())
         setContent {
             AppNav()
         }
     }
 
-    fun logLifecycle(status: String) {
-        Log.d("MY_APP", "${this.componentName.shortClassName} $status")
+    private fun getActivityName(): String {
+        return this::class.java.simpleName
     }
 
-    override fun onStart() {
-        super.onStart()
-        logLifecycle("started")
-    }
+    inner class LifecycleLogger : DefaultLifecycleObserver {
+        override fun onCreate(owner: LifecycleOwner) {
+            log("CREATED")
+        }
 
-    override fun onResume() {
-        super.onResume()
-        logLifecycle("resumed")
-    }
+        override fun onStart(owner: LifecycleOwner) {
+            log("STARTED")
+        }
 
-    override fun onPause() {
-        super.onPause()
-        logLifecycle("paused")
-    }
+        override fun onPause(owner: LifecycleOwner) {
+            log("PAUSED")
+        }
 
-    override fun onStop() {
-        super.onStop()
-        logLifecycle("stopped")
-    }
+        override fun onResume(owner: LifecycleOwner) {
+            log("RESUMED")
+        }
 
-    override fun onDestroy() {
-        super.onDestroy()
-        logLifecycle("destroyed")
+        override fun onDestroy(owner: LifecycleOwner) {
+            log("DESTROYED")
+        }
+
+        override fun onStop(owner: LifecycleOwner) {
+            log("STOPPED")
+        }
+
+        private fun log(state: String) {
+            Log.d(tag, "${getActivityName()} - $state")
+        }
     }
 }
 
@@ -88,9 +102,7 @@ fun AppNav() {
         composable("C") {
             C({
                 navController.navigate("A") {
-                    popUpTo("A") {
-                        inclusive = true
-                    }
+                    popUpTo("A")
                     launchSingleTop = true
                     Log.d("MY_APP", "Swap to A")
                 }
